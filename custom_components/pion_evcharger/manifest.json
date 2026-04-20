@@ -1,0 +1,12 @@
+{
+  "domain": "pion_evcharger",
+  "name": "Pion Power EV Charger",
+  "codeowners": [
+    "@rosenqui"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/rosenqui/pion_power_evcharger",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/rosenqui/pion_power_evcharger/issues",
+  "version": "2026.4.20"
+}
