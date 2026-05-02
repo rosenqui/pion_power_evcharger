@@ -29,6 +29,9 @@
                 "files.trimTrailingWhitespace": true,
                 "python.analysis.typeCheckingMode": "basic",
                 "python.analysis.autoImportCompletions": true,
+                "python.autoComplete.extraPaths": [
+                    "/pion_power_api"
+                ],
                 "[python]": {
                     "editor.defaultFormatter": "charliermarsh.ruff"
                 }
@@ -43,5 +46,8 @@
         "ghcr.io/devcontainers-extra/features/apt-packages:1": {
             "packages": "ffmpeg,libturbojpeg0,libpcap-dev"
         }
-    }
+    },
+    "mounts": [
+        "source=D:/Users/rosenqui/Source/Repos/GitHub/rosenqui/pion_power_api,target=/pion_power_api,type=bind,consistency=cached"
+    ]
 }

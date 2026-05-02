@@ -1,16 +1,17 @@
 # The contents of this file is based on https://github.com/home-assistant/core/blob/dev/pyproject.toml
 
+# The maximum line length for the formatter and linter
+line-length = 128
 target-version = "py314"
 
 [lint]
-select = [
-    "ALL",
-]
+select = ["ALL"]
 
 ignore = [
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
     "D203", # no-blank-line-before-class (incompatible with formatter)
     "D212", # multi-line-summary-first-line (incompatible with formatter)
+    "E501", # Line too long
     "COM812", # incompatible with formatter
     "ISC001", # incompatible with formatter
 ]
