@@ -7,15 +7,14 @@ https://github.com/rosenqui/pion_power_evcharger
 
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.loader import async_get_loaded_integration
+from pion_power_api import PionPowerAPIClient
 
-from .api import MockPionPowerAPIClient
-from .const import DOMAIN, LOGGER
+from .const import DEFAULT_URL
 from .coordinator import PionEvChargerDataUpdateCoordinator
 from .data import PionEvChargerData
 
@@ -27,37 +26,33 @@ if TYPE_CHECKING:
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
-    Platform.SWITCH,
+    # Platform.SWITCH,
 ]
 
 
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: PionEvChargerConfigEntry,
+    config_entry: PionEvChargerConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    coordinator = PionEvChargerDataUpdateCoordinator(
-        hass=hass,
-        logger=LOGGER,
-        name=DOMAIN,
-        update_interval=timedelta(hours=1),
-    )
-    entry.runtime_data = PionEvChargerData(
-        client=MockPionPowerAPIClient(
-            username=entry.data[CONF_USERNAME],
-            password=entry.data[CONF_PASSWORD],
-            session=async_get_clientsession(hass),
+    coordinator = PionEvChargerDataUpdateCoordinator(hass=hass, config_entry=config_entry)
+    config_entry.runtime_data = PionEvChargerData(
+        client=PionPowerAPIClient(
+            base_url=DEFAULT_URL,
+            username=config_entry.data[CONF_USERNAME],
+            password=config_entry.data[CONF_PASSWORD],
+            httpx_client=get_async_client(hass),
         ),
-        integration=async_get_loaded_integration(hass, entry.domain),
+        integration=async_get_loaded_integration(hass, config_entry.domain),
         coordinator=coordinator,
     )
 
     # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
     await coordinator.async_config_entry_first_refresh()
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
+    config_entry.async_on_unload(config_entry.add_update_listener(async_reload_entry))
 
     return True
 
