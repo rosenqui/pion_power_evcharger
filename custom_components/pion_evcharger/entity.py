@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, cast
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .const import DOMAIN
 from .coordinator import PionEvChargerDataUpdateCoordinator
 
 if TYPE_CHECKING:
-    from pion_power_api import Device
+    from custom_components.pion_evcharger.data import PionEvChargerDeviceData
 
 
 class PionEvChargerEntity(CoordinatorEntity[PionEvChargerDataUpdateCoordinator]):
@@ -18,12 +19,11 @@ class PionEvChargerEntity(CoordinatorEntity[PionEvChargerDataUpdateCoordinator])
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: PionEvChargerDataUpdateCoordinator) -> None:
+    def __init__(self, coordinator: PionEvChargerDataUpdateCoordinator, key: str) -> None:
         """Initialize."""
         super().__init__(coordinator)
-        self._attr_unique_id = coordinator.config_entry.entry_id
 
-        device = cast("Device", coordinator.data.get("device"))
+        device = cast("PionEvChargerDeviceData", self.coordinator.data).device
 
         self._attr_device_info = DeviceInfo(
             identifiers={
@@ -32,11 +32,14 @@ class PionEvChargerEntity(CoordinatorEntity[PionEvChargerDataUpdateCoordinator])
                     coordinator.config_entry.entry_id,
                 ),
             },
-            manufacturer="Pion Power",  # TODO(rosenqui) get this from the Login response
+            hw_version=device.hardware_version if device else "Unknown Hardware Version",
+            manufacturer=device.client.company_code if device else "Pion Power",
+            model_id=device.product_code if device else "Unknown Product Code",
             model=device.product_name if device else "Unknown Model",
             name=device.device_name if device else "Unknown Device",
             serial_number=device.device_code if device else "Unknown Serial",
+            suggested_area="Garage",
             sw_version=device.software_version if device else "Unknown Software Version",
-            hw_version=device.hardware_version if device else "Unknown Hardware Version",
-            model_id=device.product_code if device else "Unknown Product Code",
         )
+        self._attr_unique_id = f"{DOMAIN}_{device.device_code}_{key}"
+        self._key = key

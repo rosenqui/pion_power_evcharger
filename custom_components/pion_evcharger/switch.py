@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from .coordinator import PionEvChargerDataUpdateCoordinator
-    from .data import PionEvChargerConfigEntry
+    from .data import PionEvChargerConfigEntry, PionEvChargerDeviceData
 
 ENTITY_DESCRIPTIONS = (
     SwitchEntityDescription(
@@ -42,26 +42,24 @@ async def async_setup_entry(
 class PionEvChargerSwitch(PionEvChargerEntity, SwitchEntity):
     """pion_evcharger switch class."""
 
-    def __init__(
-        self,
-        coordinator: PionEvChargerDataUpdateCoordinator,
-        entity_description: SwitchEntityDescription,
-    ) -> None:
+    def __init__(self, coordinator: PionEvChargerDataUpdateCoordinator, entity_description: SwitchEntityDescription) -> None:
         """Initialize the switch class."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, entity_description.key)
         self.entity_description = entity_description
 
     @property
     def is_on(self) -> bool:
         """Return true if the switch is on."""
-        return self.coordinator.data.get("title", "") == "foo"
+        device_data = cast("PionEvChargerDeviceData", self.coordinator.data)
+        signal = device_data.device_data.get("90100006", None)
+        if signal:
+            return float(signal.signal_value) == 4.0  # noqa: PLR2004
+        return False
 
     async def async_turn_on(self, **_: Any) -> None:
         """Turn on the switch."""
-        # await self.coordinator.config_entry.runtime_data.client.async_set_title("bar")
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_: Any) -> None:
         """Turn off the switch."""
-        # await self.coordinator.config_entry.runtime_data.client.async_set_title("foo")
         await self.coordinator.async_request_refresh()

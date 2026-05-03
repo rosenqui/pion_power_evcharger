@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import typing as t
+
 import voluptuous as vol
-from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers import selector
 from homeassistant.helpers.httpx_client import get_async_client
@@ -14,20 +16,19 @@ from pion_power_api import (
     PionConnectionError,
     PionPowerAPIClient,
 )
-from slugify import slugify
 
 from .const import CONF_PION_DEVICE_CODE, DEFAULT_URL, DOMAIN, LOGGER
 
 
-class PionEvChargerFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for PionEvCharger."""
 
     VERSION = 1
 
     async def async_step_user(
         self,
-        user_input: dict | None = None,
-    ) -> config_entries.ConfigFlowResult:
+        user_input: dict[str, t.Any] | None = None,
+    ) -> ConfigFlowResult:
         """Handle a flow initialized by the user."""
         _errors = {}
         if user_input is not None:
@@ -52,21 +53,13 @@ class PionEvChargerFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 # TODO(rosenqui): this is where we need to enumerate the devices and let the user select which one(s) to add. For now we just add the first one.
 
                 for station in await client.get_station_list():
-                    LOGGER.info("Found station: %s", station)
-                    for device in await station.GetDevices():
-                        LOGGER.info("Found device: %s", device)
-                        await self.async_set_unique_id(
-                            ## Do NOT use this in production code
-                            ## The unique_id should never be something that can change
-                            ## https://developers.home-assistant.io/docs/config_entries_config_flow_handler#unique-ids
-                            unique_id=slugify(device.device_code)
-                        )
+                    LOGGER.debug("Found station: %s", station)
+                    for device in await station.get_devices():
+                        LOGGER.debug("Found device: %s", device)
+                        await self.async_set_unique_id(unique_id=f"{device.station_code}-{device.device_code}")
                         self._abort_if_unique_id_configured()
                         user_input[CONF_PION_DEVICE_CODE] = device.device_code
-                        return self.async_create_entry(
-                            title=device.device_name,
-                            data=user_input,
-                        )
+                        return self.async_create_entry(title=device.device_name, data=user_input)
 
         integration = async_get_loaded_integration(self.hass, DOMAIN)
         assert integration.documentation is not None, (  # noqa: S101
@@ -97,3 +90,16 @@ class PionEvChargerFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             errors=_errors,
         )
+
+    async def async_step_reauth(self, entry_data: t.Mapping[str, t.Any]) -> ConfigFlowResult:  # noqa: ARG002
+        """Perform reauth upon an API authentication error."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input: dict[str, t.Any] | None = None) -> ConfigFlowResult:
+        """Dialog that informs the user that reauth is required."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reauth_confirm",
+                data_schema=vol.Schema({}),
+            )
+        return await self.async_step_user()

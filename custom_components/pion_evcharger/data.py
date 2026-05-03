@@ -35,3 +35,13 @@ class PionEvChargerDeviceData:
     """A dictionary mapping signal ids to DeviceData objects."""
     device_stats: DeviceStats
     """DeviceStats object representing the daily/monthly/yearly/total stats of the device."""
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality based on device, device_data, and device_stats."""
+        if not isinstance(other, PionEvChargerDeviceData):
+            return False
+        return self.device == other.device and self.device_data == other.device_data and self.device_stats == other.device_stats
+
+    def __hash__(self) -> int:
+        """Hash based on device, device_data, and device_stats."""
+        return hash((self.device, tuple(sorted(self.device_data.items())), self.device_stats))
