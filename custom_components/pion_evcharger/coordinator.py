@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from homeassistant.const import (
     CONF_SCAN_INTERVAL,
@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from pion_power_api import PionAuthError, PionConnectionError, PionLoginError
 
 from .const import CONF_PION_DEVICE_CODE, DEFAULT_SCAN_INTERVAL, LOGGER
+from .data import PionEvChargerDeviceData
 
 if TYPE_CHECKING:
     from .data import PionEvChargerConfigEntry
@@ -38,7 +39,7 @@ class PionEvChargerDataUpdateCoordinator(DataUpdateCoordinator):
 
     config_entry: PionEvChargerConfigEntry
 
-    async def _async_update_data(self) -> Any:
+    async def _async_update_data(self) -> PionEvChargerDeviceData:
         """Update data via library."""
         try:
             api_client = self.config_entry.runtime_data.client
@@ -55,4 +56,4 @@ class PionEvChargerDataUpdateCoordinator(DataUpdateCoordinator):
         except PionConnectionError as exception:
             raise UpdateFailed(exception) from exception
         else:
-            return {"device": device, "device_data": device_data, "device_stats": device_stats}
+            return PionEvChargerDeviceData(device=device, device_data=device_data, device_stats=device_stats)
