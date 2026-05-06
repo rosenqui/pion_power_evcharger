@@ -6,6 +6,7 @@ from typing import Final
 LOGGER: Logger = getLogger(__package__)
 
 CONF_PION_DEVICE_CODE: Final = "pion_device_code"
+CONF_PION_STATION_CODE: Final = "pion_station_code"
 
 DOMAIN: Final = "pion_evcharger"
 DEFAULT_URL: Final = "https://evcharger.pionpower.ca/hems"

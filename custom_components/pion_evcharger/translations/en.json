@@ -1,21 +1,39 @@
 {
+    "title": "Pion Power EV Charger",
     "config": {
         "step": {
             "user": {
                 "description": "If you need help with the configuration have a look here: {documentation_url}",
                 "data": {
-                    "username": "Account",
+                    "username": "Email",
                     "password": "Password"
+                }
+            },
+            "select_device": {
+                "title": "Select EV Charger",
+                "description": "Select the EV charger you want to configure",
+                "data": {
+                    "pion_device_code": "EV charger name"
+                }
+            },
+            "select_station": {
+                "title": "Select House",
+                "description": "Select the house that contains the EV charger you want to configure",
+                "data": {
+                    "pion_station_code": "House"
                 }
             }
         },
         "error": {
-            "auth": "Account/Password is wrong.",
+            "auth": "Email/Password is wrong.",
             "connection": "Unable to connect to the server.",
             "unknown": "Unknown error occurred."
         },
         "abort": {
-            "already_configured": "This entry is already configured."
+            "already_configured": "This entry is already configured.",
+            "no_devices": "No EV chargers found for the selected house.",
+            "no_stations": "No houses were found in the account.",
+            "reauth_successful": "Re-authentication was successful. The configuration entry has been updated with the new credentials."
         }
     }
 }

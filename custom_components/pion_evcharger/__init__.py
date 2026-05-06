@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.loader import async_get_loaded_integration
 from pion_power_api import PionPowerAPIClient
@@ -40,7 +40,7 @@ async def async_setup_entry(
     config_entry.runtime_data = PionEvChargerData(
         client=PionPowerAPIClient(
             base_url=DEFAULT_URL,
-            username=config_entry.data[CONF_USERNAME],
+            username=config_entry.data[CONF_EMAIL],
             password=config_entry.data[CONF_PASSWORD],
             httpx_client=get_async_client(hass),
         ),
