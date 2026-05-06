@@ -6,24 +6,29 @@ import typing as t
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.helpers import selector
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.loader import async_get_loaded_integration
-from pion_power_api import (
-    PionApiError,
-    PionAuthError,
-    PionConnectionError,
-    PionPowerAPIClient,
-)
+from pion_power_api import Device, PionApiError, PionAuthError, PionConnectionError, PionPowerAPIClient, Station
 
-from .const import CONF_PION_DEVICE_CODE, DEFAULT_URL, DOMAIN, LOGGER
+from .const import CONF_PION_DEVICE_CODE, CONF_PION_STATION_CODE, DEFAULT_URL, DOMAIN, LOGGER
 
 
 class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for PionEvCharger."""
 
     VERSION = 1
+
+    def __init__(self) -> None:
+        """Initialize the config flow."""
+        self._client: PionPowerAPIClient | None = None
+        self._devices: list[Device] | None = None
+        self._selected_station_code: str | None = None
+        self._selected_device_code: str | None = None
+        self._stations: list[Station] | None = None
+        self._user_email: str | None = None
+        self._user_password: str | None = None
 
     async def async_step_user(
         self,
@@ -33,13 +38,13 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
         _errors = {}
         if user_input is not None:
             try:
-                client = PionPowerAPIClient(
+                self._client = PionPowerAPIClient(
                     base_url=DEFAULT_URL,
-                    username=user_input[CONF_USERNAME],
+                    username=user_input[CONF_EMAIL],
                     password=user_input[CONF_PASSWORD],
                     httpx_client=get_async_client(self.hass),
                 )
-                await client.login()
+                await self._client.login()
             except PionAuthError as exception:
                 LOGGER.warning(exception)
                 _errors["base"] = "auth"
@@ -50,16 +55,9 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
                 LOGGER.exception(exception)
                 _errors["base"] = "unknown"
             else:
-                # TODO(rosenqui): this is where we need to enumerate the devices and let the user select which one(s) to add. For now we just add the first one.
-
-                for station in await client.get_station_list():
-                    LOGGER.debug("Found station: %s", station)
-                    for device in await station.get_devices():
-                        LOGGER.debug("Found device: %s", device)
-                        await self.async_set_unique_id(unique_id=f"{device.station_code}-{device.device_code}")
-                        self._abort_if_unique_id_configured()
-                        user_input[CONF_PION_DEVICE_CODE] = device.device_code
-                        return self.async_create_entry(title=device.device_name, data=user_input)
+                self._user_email = user_input[CONF_EMAIL]
+                self._user_password = user_input[CONF_PASSWORD]
+                return await self.async_step_select_station()
 
         integration = async_get_loaded_integration(self.hass, DOMAIN)
         assert integration.documentation is not None, (  # noqa: S101
@@ -74,8 +72,8 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_USERNAME,
-                        default=(user_input or {}).get(CONF_USERNAME, vol.UNDEFINED),
+                        CONF_EMAIL,
+                        default=(user_input or {}).get(CONF_EMAIL, vol.UNDEFINED),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.EMAIL,
@@ -103,3 +101,95 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
                 data_schema=vol.Schema({}),
             )
         return await self.async_step_user()
+
+    async def async_step_select_station(self, user_input: dict[str, t.Any] | None = None) -> ConfigFlowResult:
+        """Handle station selection."""
+        if user_input is None:
+            if self._client is None:
+                return await self.async_step_user()
+            self._stations = await self._client.get_station_list()
+            if len(self._stations) == 1:
+                self._selected_station_code = self._stations[0].station_code
+                LOGGER.debug("Only one station found, selecting station: %s", self._selected_station_code)
+                return await self.async_step_select_device()
+            if len(self._stations) == 0:
+                LOGGER.error("No stations found for the user")
+                return self.async_abort(reason="no_stations")
+            # More than 1 station - get the user to pick which one they want to use.
+            return self.async_show_form(
+                step_id="select_station",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_PION_STATION_CODE,
+                            default=self._stations[0].station_code,
+                        ): selector.SelectSelector(
+                            selector.SelectSelectorConfig(
+                                options=[
+                                    {"label": station.station_name, "value": station.station_code} for station in self._stations
+                                ],
+                                sort=True,
+                                mode=selector.SelectSelectorMode.LIST
+                                if len(self._stations) <= 5  # noqa: PLR2004
+                                else selector.SelectSelectorMode.DROPDOWN,
+                            ),
+                        )
+                    },
+                ),
+            )
+        self._selected_station_code = user_input[CONF_PION_STATION_CODE]
+        LOGGER.debug("Selected station: %s", self._selected_station_code)
+        return await self.async_step_select_device()
+
+    async def async_step_select_device(self, user_input: dict[str, t.Any] | None = None) -> ConfigFlowResult:
+        """Handle device selection."""
+        if user_input is None:
+            if self._client is None:
+                return await self.async_step_user()
+            if self._selected_station_code is None:
+                return await self.async_step_select_station()
+            self._devices = await self._client.get_device_list(station_code=self._selected_station_code)
+            if len(self._devices) == 0:
+                LOGGER.error("No devices found for the selected station: %s", self._selected_station_code)
+                return self.async_abort(reason="no_devices")
+            if len(self._devices) == 1:
+                self._selected_device_code = self._devices[0].device_code
+                LOGGER.debug("Only one device found, selecting device: %s", self._selected_device_code)
+            else:
+                return self.async_show_form(
+                    step_id="select_device",
+                    data_schema=vol.Schema(
+                        {
+                            vol.Required(CONF_PION_DEVICE_CODE, default=self._devices[0].device_code): selector.SelectSelector(
+                                selector.SelectSelectorConfig(
+                                    options=[
+                                        {"label": device.device_name, "value": device.device_code} for device in self._devices
+                                    ],
+                                    sort=True,
+                                    mode=selector.SelectSelectorMode.LIST
+                                    if len(self._devices) <= 5  # noqa: PLR2004
+                                    else selector.SelectSelectorMode.DROPDOWN,
+                                ),
+                            )
+                        },
+                    ),
+                )
+        # We end up here if the user selected a device from the form, or if there was only one device and we auto-selected it.
+        # In either case we should have a selected device code, but we check just in case.
+        if self._selected_device_code is None and user_input is not None:
+            self._selected_device_code = user_input[CONF_PION_DEVICE_CODE]
+        if self._selected_device_code is None:
+            return self.async_abort(reason="no_devices")
+        LOGGER.debug("Selected device: %s", self._selected_device_code)
+        assert self._devices is not None, "Device list is not initialized"  # noqa: S101
+        device_name = next(
+            (device.device_name for device in self._devices if device.device_code == self._selected_device_code), None
+        )
+        assert device_name is not None, "Selected device code does not match any device"  # noqa: S101
+        user_input = {
+            CONF_EMAIL: self._user_email,
+            CONF_PASSWORD: self._user_password,
+            CONF_PION_STATION_CODE: self._selected_station_code,
+            CONF_PION_DEVICE_CODE: self._selected_device_code,
+        }
+        return self.async_create_entry(title=device_name, data=user_input)

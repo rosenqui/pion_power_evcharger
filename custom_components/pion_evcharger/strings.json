@@ -1,12 +1,30 @@
 {
+    "title": "[%key:component::pion_evcharger::title%]",
     "config": {
         "step": {
             "reauth_confirm": {
                 "title": "[%key:common::config_flow::title::reauth%]",
-                "description": "The Pion Power EV Charger integration needs to re-authenticate your account"
+                "description": "[%key:component::pion_evcharger::config::step::reauth_confirm::description%]"
+            },
+            "select_device": {
+                "title": "[%key:component::pion_evcharger::config::step::select_device::title%]",
+                "description": "[%key:component::pion_evcharger::config::step::select_device::description%]",
+                "data": {
+                    "pion_device_code": "[%key:component::pion_evcharger::config::step::select_device::data::pion_device_code%]"
+                }
+            },
+            "select_station": {
+                "title": "[%key:component::pion_evcharger::config::step::select_station::title%]",
+                "description": "[%key:component::pion_evcharger::config::step::select_station::description%]",
+                "data": {
+                    "pion_station_code": "[%key:component::pion_evcharger::config::step::select_station::data::pion_station_code%]"
+                }
             }
         },
         "abort": {
+            "already_configured": "[%key:component::pion_evcharger::config::abort::already_configured%]",
+            "no_devices": "[%key:component::pion_evcharger::config::abort::no_devices%]",
+            "no_stations": "[%key:component::pion_evcharger::config::abort::no_stations%]",
             "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
         }
     }
