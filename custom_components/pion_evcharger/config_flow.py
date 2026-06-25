@@ -5,7 +5,7 @@ from __future__ import annotations
 import typing as t
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.helpers import selector
 from homeassistant.helpers.httpx_client import get_async_client
@@ -19,6 +19,7 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for PionEvCharger."""
 
     VERSION = 1
+    reauth_entry: ConfigEntry | None = None
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -91,6 +92,7 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth(self, entry_data: t.Mapping[str, t.Any]) -> ConfigFlowResult:  # noqa: ARG002
         """Perform reauth upon an API authentication error."""
+        self.reauth_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(self, user_input: dict[str, t.Any] | None = None) -> ConfigFlowResult:
@@ -141,7 +143,7 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
         LOGGER.debug("Selected station: %s", self._selected_station_code)
         return await self.async_step_select_device()
 
-    async def async_step_select_device(self, user_input: dict[str, t.Any] | None = None) -> ConfigFlowResult:
+    async def async_step_select_device(self, user_input: dict[str, t.Any] | None = None) -> ConfigFlowResult:  # noqa: PLR0911
         """Handle device selection."""
         if user_input is None:
             if self._client is None:
@@ -192,4 +194,11 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
             CONF_PION_STATION_CODE: self._selected_station_code,
             CONF_PION_DEVICE_CODE: self._selected_device_code,
         }
+        if self.reauth_entry is not None:
+            LOGGER.debug("Reauth flow - updating existing entry: %s", self.reauth_entry.entry_id)
+            self.hass.config_entries.async_update_entry(self.reauth_entry, data=user_input)
+            await self.hass.config_entries.async_reload(self.reauth_entry.entry_id)
+            return self.async_abort(reason="reauth_successful")
+
+        LOGGER.debug("New config flow - creating new entry")
         return self.async_create_entry(title=device_name, data=user_input)

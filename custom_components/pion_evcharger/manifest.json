@@ -11,5 +11,5 @@
   "requirements": [
     "git+https://github.com/rosenqui/pion_power_api.git@main"
   ],
-  "version": "2026.5.21"
+  "version": "2026.6.25"
 }
