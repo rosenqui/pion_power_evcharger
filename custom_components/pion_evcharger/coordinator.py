@@ -40,20 +40,29 @@ class PionEvChargerDataUpdateCoordinator(DataUpdateCoordinator):
     config_entry: PionEvChargerConfigEntry
 
     async def _async_update_data(self) -> PionEvChargerDeviceData:
-        """Update data via library."""
-        try:
-            api_client = self.config_entry.runtime_data.client
+        """Update data via the client library."""
+        have_retried: bool = False
 
-            if not api_client.is_logged_in:
-                await api_client.login()
-            device = await api_client.get_device(str(self.config_entry.data.get(CONF_PION_DEVICE_CODE)))
-            device_data = await device.get_realtime_data()
-            device_stats = await device.get_stats()
-        except PionLoginError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except PionAuthError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except PionConnectionError as exception:
-            raise UpdateFailed(exception) from exception
-        else:
-            return PionEvChargerDeviceData(device=device, device_data=device_data, device_stats=device_stats)
+        while True:
+            try:
+                api_client = self.config_entry.runtime_data.client
+
+                if not api_client.is_logged_in:
+                    await api_client.login()
+                device = await api_client.get_device(str(self.config_entry.data.get(CONF_PION_DEVICE_CODE)))
+                device_data = await device.get_realtime_data()
+                device_stats = await device.get_stats()
+            except PionLoginError as exception:
+                raise ConfigEntryAuthFailed(exception) from exception
+            except PionAuthError as exception:
+                if have_retried:
+                    raise ConfigEntryAuthFailed(exception) from exception
+                have_retried = True
+                LOGGER.warning("Auth error, retrying login: %s", exception)
+            except PionConnectionError as exception:
+                if have_retried:
+                    raise UpdateFailed(exception) from exception
+                have_retried = True
+                LOGGER.warning("Connection error, retrying: %s", exception)
+            else:
+                return PionEvChargerDeviceData(device=device, device_data=device_data, device_stats=device_stats)
