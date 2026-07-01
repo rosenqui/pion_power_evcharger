@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+import logging
+from typing import TYPE_CHECKING, Final, cast
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.const import (
@@ -26,6 +27,8 @@ if TYPE_CHECKING:
     from .coordinator import PionEvChargerDataUpdateCoordinator
     from .data import PionEvChargerConfigEntry, PionEvChargerDeviceData
 
+_LOGGER: Final = logging.getLogger(__name__)
+
 ENTITY_DESCRIPTIONS = (
     SensorEntityDescription(
         key="90100009",
@@ -37,7 +40,7 @@ ENTITY_DESCRIPTIONS = (
         key="90100200",
         name="Leakage current",
         device_class=SensorDeviceClass.CURRENT,
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
         entity_category=EntityCategory.DIAGNOSTIC,
         suggested_display_precision=1,
     ),
@@ -232,8 +235,26 @@ class PionEvChargerSensor(PionEvChargerEntity, SensorEntity):
         if signal:
             if self._key == "90100009" and signal.signal_meaning:
                 return signal.signal_meaning
+            if signal.signal_unit:
+                pion_unit = self.normalize_unit(signal.signal_unit)
+                if pion_unit != self.entity_description.native_unit_of_measurement:
+                    _LOGGER.warning(
+                        "Signal unit '%s' for signal '%s' does not match expected unit '%s'",
+                        pion_unit,
+                        self._key,
+                        self.entity_description.native_unit_of_measurement,
+                    )
             return signal.signal_value
         return None
+
+    @staticmethod
+    def normalize_unit(unit: str) -> str:
+        """Normalize the unit of measurement."""
+        units = {
+            "℃": UnitOfTemperature.CELSIUS,
+            "℉": UnitOfTemperature.FAHRENHEIT,
+        }
+        return units.get(unit, unit)
 
 
 class PionEvChargerSensorStatistic(PionEvChargerEntity, SensorEntity):
