@@ -1,0 +1,34 @@
+stop_charge:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: pion_evcharger
+start_charge:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: pion_evcharger
+    current:
+      required: false
+      example: 32
+      default: 0
+      selector:
+        number:
+          min: 6
+          max: 40
+          step: 1
+          unit_of_measurement: "A"
+    duration:
+      required: false
+      example: 24
+      default: 24
+      selector:
+        number:
+          min: 1
+          max: 24
+          step: 1
+          unit_of_measurement: "h"

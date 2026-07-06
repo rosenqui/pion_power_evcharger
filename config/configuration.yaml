@@ -10,3 +10,4 @@ logger:
   default: info
   logs:
     custom_components.pion_evcharger: debug
+    pion_power_api.client: debug

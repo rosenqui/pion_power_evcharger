@@ -33,8 +33,8 @@ ENTITY_DESCRIPTIONS = (
     SensorEntityDescription(
         key="90100009",
         name="Reason for stopping charging",
-        icon="mdi:octagon",
         entity_category=EntityCategory.DIAGNOSTIC,
+        translation_key="reason_for_stopping_charging",
     ),
     SensorEntityDescription(
         key="90100200",
@@ -42,6 +42,7 @@ ENTITY_DESCRIPTIONS = (
         device_class=SensorDeviceClass.CURRENT,
         native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
         entity_category=EntityCategory.DIAGNOSTIC,
+        translation_key="leakage_current",
         suggested_display_precision=1,
     ),
     SensorEntityDescription(
@@ -50,6 +51,7 @@ ENTITY_DESCRIPTIONS = (
         device_class=SensorDeviceClass.CURRENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_category=EntityCategory.DIAGNOSTIC,
+        translation_key="max_current",
         suggested_display_precision=1,
     ),
     SensorEntityDescription(
@@ -57,6 +59,7 @@ ENTITY_DESCRIPTIONS = (
         name="Current",
         device_class=SensorDeviceClass.CURRENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        translation_key="current",
         suggested_display_precision=1,
     ),
     SensorEntityDescription(
@@ -65,6 +68,7 @@ ENTITY_DESCRIPTIONS = (
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         entity_category=EntityCategory.DIAGNOSTIC,
+        translation_key="plug_temperature",
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
@@ -73,6 +77,7 @@ ENTITY_DESCRIPTIONS = (
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         entity_category=EntityCategory.DIAGNOSTIC,
+        translation_key="male_connector_temperature",
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
@@ -81,6 +86,7 @@ ENTITY_DESCRIPTIONS = (
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         suggested_display_precision=0,
+        translation_key="voltage",
     ),
     SensorEntityDescription(
         key="90100306",
@@ -88,6 +94,7 @@ ENTITY_DESCRIPTIONS = (
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         suggested_display_precision=1,
+        translation_key="power",
     ),
 )
 
@@ -101,6 +108,7 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
         suggested_display_precision=1,
+        translation_key="daily_charging_energy",
     ),
     SensorEntityDescription(
         key="day_stat.ev_charge_hours",
@@ -110,14 +118,15 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        translation_key="daily_charging_duration",
     ),
     SensorEntityDescription(
         key="day_stat.ev_order_number",
         name="Daily charging sessions",
-        icon="mdi:counter",
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        translation_key="daily_charging_sessions",
     ),
     SensorEntityDescription(
         key="month_stat.ev_charge",
@@ -128,6 +137,7 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
         suggested_display_precision=1,
+        translation_key="monthly_charging_energy",
     ),
     SensorEntityDescription(
         key="month_stat.ev_charge_hours",
@@ -137,14 +147,15 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        translation_key="monthly_charging_duration",
     ),
     SensorEntityDescription(
         key="month_stat.ev_order_number",
         name="Monthly charging sessions",
-        icon="mdi:counter",
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        translation_key="monthly_charging_sessions",
     ),
     SensorEntityDescription(
         key="year_stat.ev_charge",
@@ -155,6 +166,7 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
         suggested_display_precision=1,
+        translation_key="yearly_charging_energy",
     ),
     SensorEntityDescription(
         key="year_stat.ev_charge_hours",
@@ -164,14 +176,15 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        translation_key="yearly_charging_duration",
     ),
     SensorEntityDescription(
         key="year_stat.ev_order_number",
         name="Yearly charging sessions",
-        icon="mdi:counter",
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        translation_key="yearly_charging_sessions",
     ),
     SensorEntityDescription(
         key="total_stat.ev_charge",
@@ -181,6 +194,7 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         entity_category=EntityCategory.DIAGNOSTIC,
         suggested_display_precision=1,
+        translation_key="total_charging_energy",
     ),
     SensorEntityDescription(
         key="total_stat.ev_charge_hours",
@@ -189,13 +203,14 @@ STATISTIC_ENTITY_DESCRIPTIONS = (
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_category=EntityCategory.DIAGNOSTIC,
+        translation_key="total_charging_duration",
     ),
     SensorEntityDescription(
         key="total_stat.ev_order_number",
         name="Total charging sessions",
-        icon="mdi:counter",
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_category=EntityCategory.DIAGNOSTIC,
+        translation_key="total_charging_sessions",
     ),
 )
 

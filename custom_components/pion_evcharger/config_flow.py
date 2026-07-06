@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import typing as t
 
 import voluptuous as vol
@@ -201,4 +202,7 @@ class PionEvChargerFlowHandler(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="reauth_successful")
 
         LOGGER.debug("New config flow - creating new entry")
+        unique_id = hashlib.sha256(user_input[CONF_EMAIL].lower().encode("utf-8")).hexdigest()
+        await self.async_set_unique_id(unique_id)
+        self._abort_if_unique_id_configured(updates=user_input)
         return self.async_create_entry(title=device_name, data=user_input)
