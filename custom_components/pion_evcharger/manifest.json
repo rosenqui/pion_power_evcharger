@@ -9,7 +9,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/rosenqui/pion_power_evcharger/issues",
   "requirements": [
-    "git+https://github.com/rosenqui/pion_power_api.git@main"
+    "pion_power_api@git+https://github.com/rosenqui/pion_power_api.git@v2026.7.6"
   ],
-  "version": "2026.7.1"
+  "version": "2026.7.6"
 }

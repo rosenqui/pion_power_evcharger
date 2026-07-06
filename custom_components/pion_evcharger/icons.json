@@ -1,0 +1,29 @@
+{
+  "entity": {
+    "sensor": {
+      "daily_charging_sessions": {
+        "default": "mdi:counter"
+      },
+      "monthly_charging_sessions": {
+        "default": "mdi:counter"
+      },
+      "reason_for_stopping_charging": {
+        "default": "mdi:octagon"
+      },
+      "total_charging_sessions": {
+        "default": "mdi:counter"
+      },
+      "yearly_charging_sessions": {
+        "default": "mdi:counter"
+      }
+    }
+  },
+  "services": {
+    "start_charge": {
+      "service": "mdi:power-plug"
+    },
+    "stop_charge": {
+      "service": "mdi:power-plug-off"
+    }
+  }
+}
