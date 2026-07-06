@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, cast
 from homeassistant.const import ATTR_DEVICE_ID, CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import ServiceCall, callback
 from homeassistant.exceptions import InvalidStateError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry
 from homeassistant.helpers.httpx_client import create_async_httpx_client
 from homeassistant.loader import async_get_loaded_integration
@@ -25,6 +26,8 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from .data import PionEvChargerConfigEntry
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -54,7 +57,7 @@ async def async_setup(hass: HomeAssistant, _config_entry: PionEvChargerConfigEnt
             msg = "Invalid duration provided"
             raise InvalidStateError(msg)
 
-        await device_data.device.start_charging(power_watts=0, current=current, duration_hours=duration)
+        await device_data.device.start_charging(current=current, duration_hours=duration)
 
     @callback
     async def async_handle_stop_charge(call: ServiceCall) -> None:
